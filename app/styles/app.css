@@ -3,6 +3,11 @@
   width: 80%;
 }
 
+#state-map {
+  height: 500px;
+  width: 50%;
+}
+
 .info {
   font-size: 20px;
 }
