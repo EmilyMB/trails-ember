@@ -1,7 +1,8 @@
 /* globals L */
 
 import Ember from 'ember';
-const accessToken = 'pk.eyJ1IjoibHlkaWFzMzAzIiwiYSI6ImM0WG9rY28ifQ.bM1Nx1fsDmbAFLVP1f9Img';
+const accessToken = 'pk.eyJ1IjoiY2x1aHJpbmciLCJhIjoiNWF2Z1l6ZyJ9.8peAq7kTQyvXShlVv1K82w';
+const zoom = 5;
 
 export default Ember.Component.extend({
   map: null,
@@ -12,20 +13,27 @@ export default Ember.Component.extend({
 
     L.mapbox.accessToken = accessToken;
 
-    let map = L.mapbox.map('state-map', 'lydias303.4be232dc');
+    let map = L.mapbox.map('state-map', 'emilymb.n10534gb');
     this.set('map', map);
     this.addPoints();
   }),
 
   addPoints() {
     const trails = this.get('model');
+    const firstTrail = trails.get('firstObject');
+    this.get('map').setView([firstTrail.get('lat'), firstTrail.get('lng')], zoom);
+
     trails.forEach(function(trail) {
       this.setPoint(trail);
     }, this);
   },
 
+  pointStyle() {
+    return { color: "white" };
+  },
+
   setPoint(trail) {
-    var point =
+    let point =
       {
         'type': 'Feature',
         'geometry': {
@@ -38,15 +46,14 @@ export default Ember.Component.extend({
           'description': trail.get('description') || 'No description available',
           'state': trail.get('state'),
           'marker-symbol': 'park',
-          'marker-color': '#0C5CFE',
+          'marker-color': '#0C0',
           'marker-size': 'small'
         }
       };
-    this.get('map').setView([trail.get('lat'), trail.get('lng')], 5);
 
     let onEachFeature = (feature, layer) => {
       layer.on({
-        mouseover: function(layer) {
+        mouseover() {
           let content = `<h2>${this.feature.properties.name}</h2>
             <p>${this.feature.properties.description}</p>`;
           this.bindPopup(content);
@@ -62,6 +69,7 @@ export default Ember.Component.extend({
     };
 
     L.geoJson(point, {
+      style: this.pointStyle,
       onEachFeature: onEachFeature
     }).addTo(this.get('map'));
     // L.mapbox.featureLayer(point).addTo(this.get('map'));

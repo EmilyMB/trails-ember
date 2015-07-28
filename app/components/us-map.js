@@ -1,7 +1,7 @@
 /* globals L */
 
 import Ember from 'ember';
-
+const accessToken = 'pk.eyJ1IjoiY2x1aHJpbmciLCJhIjoiNWF2Z1l6ZyJ9.8peAq7kTQyvXShlVv1K82w';
 export default Ember.Component.extend({
 
   map: null,
@@ -9,7 +9,7 @@ export default Ember.Component.extend({
   stateClickedAction: 'stateSelected',
 
   didInsertElement: function () {
-    L.mapbox.accessToken = 'pk.eyJ1IjoiY2x1aHJpbmciLCJhIjoiNWF2Z1l6ZyJ9.8peAq7kTQyvXShlVv1K82w';
+    L.mapbox.accessToken = accessToken;
 
     let map = L.mapbox.map('map', 'cluhring.9d2c52ea');
     this.set('map', map);
@@ -68,14 +68,21 @@ export default Ember.Component.extend({
                       {"type":"Feature","id":"56","properties":{"name":"Wyoming","tot_trails":407},"geometry":{"type":"Polygon","coordinates":[[[-109.080842,45.002073],[-105.91517,45.002073],[-104.058488,44.996596],[-104.053011,43.002989],[-104.053011,41.003906],[-105.728954,40.998429],[-107.919731,41.003906],[-109.04798,40.998429],[-111.047063,40.998429],[-111.047063,42.000709],[-111.047063,44.476286],[-111.05254,45.002073],[-109.080842,45.002073]]]}},
                       ]};
 
-    function getColor(d) {
-      return d > 1000 ? '#4a1486' :
-             d > 500  ? '#6a51a3' :
-             d > 200  ? '#807dba' :
-             d > 100  ? '#9e9ac8' :
-             d > 50   ? '#bcbddc' :
-                        'white';
-    }
+    let info = L.control();
+    let legend = L.control({position: 'bottomright'});
+    let onEachFeature = (feature, layer) => {
+      layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: function () {
+          this.sendAction('stateClickedAction', feature.properties.name);
+        }.bind(this)
+      });
+    };
+    let geojson = L.geoJson(statesData, {
+      style: style,
+      onEachFeature: onEachFeature.bind(this)
+    }).addTo(map);
 
     function style(feature) {
       return {
@@ -87,16 +94,25 @@ export default Ember.Component.extend({
       };
     }
 
+    function getColor(d) {
+      return d >= 1000 ? '#4a1486' :
+             d >= 500  ? '#6a51a3' :
+             d >= 200  ? '#807dba' :
+             d >= 100  ? '#9e9ac8' :
+             d >= 50   ? '#bcbddc' :
+                        'white';
+    }
+
     function highlightFeature(e) {
       let layer = e.target;
       info.update(layer.feature.properties);
       layer.setStyle({
-          weight: 2,
-          color: 'purple',
+        weight: 2.5,
+        color: '#444'
       });
 
       if (!L.Browser.ie && !L.Browser.opera) {
-          layer.bringToFront();
+        layer.bringToFront();
       }
     }
 
@@ -105,24 +121,7 @@ export default Ember.Component.extend({
       geojson.resetStyle(e.target);
     }
 
-    let onEachFeature = (feature, layer) => {
-      layer.on({
-        mouseover: highlightFeature,
-        mouseout: resetHighlight,
-        click: function (e) {
-          this.sendAction('stateClickedAction', feature.properties.name);
-        }.bind(this)
-      });
-    };
-
-    let geojson = L.geoJson(statesData, {
-        style: style,
-        onEachFeature: onEachFeature.bind(this)
-    }).addTo(map);
-
-    let info = L.control();
-
-    info.onAdd = function (map) {
+    info.onAdd = function () {
       this._div = L.DomUtil.create('div', 'info');
       this.update();
       return this._div;
@@ -130,25 +129,28 @@ export default Ember.Component.extend({
 
   // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
-      this._div.innerHTML =  (props ?
-          '<b>' + props.name + '</b><br />' + props.tot_trails + ' trails'
-          : 'Hover for info');
+      this._div.innerHTML = props ?
+        '<b>' + props.name + '</b><br />' + props.tot_trails + ' trails' :
+        'Hover for info';
     };
 
     info.addTo(map);
 
-    let legend = L.control({position: 'bottomright'});
+    legend.onAdd = function () {
 
-    legend.onAdd = function (map) {
+      let div = L.DomUtil.create('div', 'info legend');
+      let grades = [0, 50, 100, 200, 500, 1000];
 
-      let div = L.DomUtil.create('div', 'info legend'),
-          grades = [0, 50, 100, 200, 500, 1000];
-          div.innerHTML = "Number of Trails";
+      div.innerHTML = 'Number of Trails';
       // loop through our density intervals and generate a label with a colored square for each interval
       for (let i = 0; i < grades.length; i++) {
+        let grade = grades[i];
+        let nextGrade = grades[i+1];
+        let color = getColor(grade);
+        let labelEnd = nextGrade ? `-${nextGrade - 1}` : `+`;
+
         div.innerHTML +=
-          '<p><i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-          grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '</p>' : '+');
+          `<p><i style="background: ${color}"></i>${grade}${labelEnd}</p>`;
       }
 
       return div;

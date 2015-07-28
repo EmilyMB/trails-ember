@@ -24,7 +24,7 @@ module.exports = function(environment) {
     'script-src': "'self'",
     'font-src': "'self' http://fonts.gstatic.com",
     'connect-src': "'self' http://a.tiles.mapbox.com",
-    'img-src': "'self' data: http://a.tiles.mapbox.com http://b.tiles.mapbox.com http://api.tiles.mapbox.com",
+    'img-src': "'self' data: http://a.tiles.mapbox.com http://b.tiles.mapbox.com http://api.tiles.mapbox.com http://160.111.248.28",
     'style-src': "'self' 'unsafe-inline' http://fonts.googleapis.com",
     'media-src': "'self'"
   }
