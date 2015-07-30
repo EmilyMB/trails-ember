@@ -28,12 +28,12 @@ html, body {
 
 .info {
   font-size: 20px;
+  color: #444;
 }
 
 .legend {
-  font-size: 20px;
-  line-height: 24px;
-  color: #555;
+  font-size: 18px;
+  color: #444;
   background: rgba(225, 225, 245, .9);
 }
 .legend i {
@@ -41,7 +41,6 @@ html, body {
   height: 18px;
   float: left;
   margin-right: 8px;
-  opacity: 1;
 }
 
 .leaflet-control-zoom-in,
